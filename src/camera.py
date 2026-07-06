@@ -1,13 +1,15 @@
 """Accessoire caméra HomeKit s'appuyant sur la caméra CSI d'un Raspberry Pi.
 
 La diffusion repose sur ``rpicam-vid`` (encodage H.264 matériel via libcamera sous
-Raspberry Pi OS Bookworm) dont la sortie est redirigée vers ``ffmpeg`` en mode
-``-c:v copy`` : FFmpeg ne fait que l'emballage SRTP attendu par HomeKit, sans
-réencodage. Cela maintient une charge CPU minimale, adaptée au Raspberry Pi Zero 2.
+Raspberry Pi OS Bookworm ; ``libcamera-vid`` sous Bullseye, cf. RPICAM_VID) dont
+la sortie est redirigée vers ``ffmpeg`` en mode ``-c:v copy`` : FFmpeg ne fait que
+l'emballage SRTP attendu par HomeKit, sans réencodage. Cette charge CPU minimale
+est adaptée aussi bien au Raspberry Pi Zero 2 qu'au Pi Zero v1 (ARMv6, mono-cœur).
 """
 
 import asyncio
 import logging
+import shutil
 import subprocess
 
 from pyhap.camera import (
@@ -17,6 +19,28 @@ from pyhap.camera import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _resolve_camera_binary(rpicam_name, libcamera_name):
+    """Choisit le binaire caméra disponible sur le système.
+
+    Raspberry Pi OS Bookworm fournit ``rpicam-vid``/``rpicam-jpeg``. Bullseye —
+    la dernière version supportant l'ARMv6 du Pi Zero v1 — expose exactement les
+    mêmes outils sous leur ancien nom ``libcamera-vid``/``libcamera-jpeg``, avec
+    des options identiques. On sélectionne celui qui est présent afin de rester
+    compatible des deux systèmes sans configuration.
+    """
+    for name in (rpicam_name, libcamera_name):
+        if shutil.which(name):
+            return name
+    # Aucun trouvé : on garde le nom Bookworm pour produire un message d'erreur
+    # explicite (« command not found ») au lancement du flux.
+    return rpicam_name
+
+
+# Résolus une seule fois à l'import (au démarrage du service).
+RPICAM_VID = _resolve_camera_binary("rpicam-vid", "libcamera-vid")
+RPICAM_JPEG = _resolve_camera_binary("rpicam-jpeg", "libcamera-jpeg")
 
 # Correspondance entre les profils/niveaux H.264 négociés par HomeKit et les
 # arguments attendus par rpicam-vid.
@@ -112,7 +136,7 @@ class PiCamera(Camera):
         )
 
         cmd = [
-            "rpicam-vid",
+            RPICAM_VID,
             "-t", "0",
             "--inline",
             "--nopreview",
@@ -272,7 +296,7 @@ class PiCamera(Camera):
         width = image_size.get("image-width", 1280)
         height = image_size.get("image-height", 720)
         autofocus = self._camera_config.get("autofocus", "none")
-        cmd = ["rpicam-jpeg", "--nopreview", "-t", "1",
+        cmd = [RPICAM_JPEG, "--nopreview", "-t", "1",
                "--width", str(width), "--height", str(height)]
         if autofocus and autofocus.lower() not in ("none", "disabled", "false"):
             cmd += ["--autofocus-mode", autofocus]

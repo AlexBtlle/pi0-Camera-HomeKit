@@ -2,6 +2,13 @@
 
 *[English version](README.en_US.md)*
 
+> ⚠️ **Projet archivé — non maintenu**
+>
+> Ce dépôt n'est plus maintenu. Le développement se poursuit sur un projet plus
+> complet : **[pi4-IA-Homekit-Camera](https://github.com/AlexBtlle/pi4-IA-Homekit-Camera)**.
+>
+> Le code reste disponible en l'état, mais ne recevra plus de corrections ni de nouvelles fonctionnalités.
+
 Ce projet ne prend en charge que le streaming en direct de la caméra, si vous souhaitez utiliser la détection de mouvement, allez faire un tour sur cet autre projet : [Pi4 IA Homekit camera](https://github.com/AlexBtlle/pi4-IA-Homekit-Camera) (aussi compatible avec le Pi0 2w).
 
 Projet open source permettant d'envoyer le flux vidéo d'une caméra CSI (module Pi Camera)

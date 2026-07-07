@@ -21,7 +21,26 @@ SRC_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 echo "==> Installation des paquets système…"
 apt-get update
-apt-get install -y python3-venv python3-pip ffmpeg rpicam-apps avahi-daemon
+
+# Paquet caméra : « rpicam-apps » sous Raspberry Pi OS Bookworm, « libcamera-apps »
+# sous Bullseye (dernière version supportant l'ARMv6 du Pi Zero v1).
+CAM_PKG="rpicam-apps"
+if ! apt-cache show rpicam-apps >/dev/null 2>&1; then
+    CAM_PKG="libcamera-apps"
+fi
+
+APT_PACKAGES=(python3-venv python3-pip ffmpeg "${CAM_PKG}" avahi-daemon)
+
+# Sur ARMv6 (Pi Zero v1), compiler « cryptography » depuis les sources via pip
+# prend 30 à 60 min et échoue souvent faute de RAM (toolchain Rust). On installe
+# le binaire Debian tout prêt via apt ; le venv le réutilisera plus bas grâce à
+# --system-site-packages.
+ARCH="$(uname -m)"
+if [[ "${ARCH}" == "armv6l" ]]; then
+    APT_PACKAGES+=(python3-cryptography)
+fi
+
+apt-get install -y "${APT_PACKAGES[@]}"
 
 echo "==> Copie du projet vers ${INSTALL_DIR}…"
 mkdir -p "${INSTALL_DIR}"
@@ -34,9 +53,19 @@ if [[ ! -f "${INSTALL_DIR}/config.yaml" ]]; then
 fi
 
 echo "==> Création de l'environnement virtuel Python…"
-python3 -m venv "${INSTALL_DIR}/venv"
+# Sur ARMv6, --system-site-packages permet au venv de réutiliser le
+# python3-cryptography installé via apt (binaire précompilé), évitant une
+# compilation interminable. Sur les autres architectures, venv isolé classique.
+PIP_EXTRA=()
+if [[ "${ARCH}" == "armv6l" ]]; then
+    python3 -m venv --system-site-packages "${INSTALL_DIR}/venv"
+    # piwheels fournit des wheels ARM précompilés pour les dépendances restantes.
+    PIP_EXTRA=(--extra-index-url https://www.piwheels.org/simple)
+else
+    python3 -m venv "${INSTALL_DIR}/venv"
+fi
 "${INSTALL_DIR}/venv/bin/pip" install --upgrade pip
-"${INSTALL_DIR}/venv/bin/pip" install -r "${INSTALL_DIR}/requirements.txt"
+"${INSTALL_DIR}/venv/bin/pip" install "${PIP_EXTRA[@]}" -r "${INSTALL_DIR}/requirements.txt"
 
 echo "==> Génération du code d'appairage si nécessaire…"
 # Génère un PIN au format HomeKit XXX-XX-XXX si le champ est vide.
@@ -45,6 +74,17 @@ if grep -qE '^[[:space:]]*pincode:[[:space:]]*""' "${INSTALL_DIR}/config.yaml"; 
         "$((RANDOM % 1000))" "$((RANDOM % 100))" "$((RANDOM % 1000))")"
     sed -i "s/^\([[:space:]]*pincode:[[:space:]]*\)\"\"/\1\"${PIN}\"/" "${INSTALL_DIR}/config.yaml"
     echo "    Code d'appairage généré : ${PIN}"
+fi
+
+echo "==> Mémoire GPU…"
+# 128 MB est suffisant pour l'encodage H.264 matériel (VideoCore IV/VI).
+# Libérer davantage de RAM pour Python et ffmpeg sur le Pi Zero W (512 MB total).
+CONFIG_TXT="/boot/firmware/config.txt"
+[[ ! -f "${CONFIG_TXT}" ]] && CONFIG_TXT="/boot/config.txt"
+if ! grep -q "^gpu_mem=" "${CONFIG_TXT}"; then
+    echo "gpu_mem=128" >> "${CONFIG_TXT}"
+else
+    sed -i "s/^gpu_mem=.*/gpu_mem=128/" "${CONFIG_TXT}"
 fi
 
 echo "==> Permissions…"

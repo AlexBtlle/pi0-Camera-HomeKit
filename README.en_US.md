@@ -2,6 +2,13 @@
 
 *[Version française](README.md)*
 
+> ⚠️ **Archived project — no longer maintained**
+>
+> This repository is no longer maintained. Development continues on a more
+> complete project: **[pi4-IA-Homekit-Camera](https://github.com/AlexBtlle/pi4-IA-Homekit-Camera)**.
+>
+> The code remains available as-is, but will no longer receive fixes or new features.
+
 This project only takes in charge live streaming from the camera, if you want to use Homekit motion detection, have look at this repo : [Pi4 IA Homekit camera](https://github.com/AlexBtlle/pi4-IA-Homekit-Camera) (also runnable on Pi0 2W).
 
 Open-source project that streams the video feed of a CSI camera (Pi Camera module)

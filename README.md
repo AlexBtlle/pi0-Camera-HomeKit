@@ -2,6 +2,15 @@
 
 *[English version](README.en_US.md)*
 
+> ⚠️ **Projet archivé — non maintenu**
+>
+> Ce dépôt n'est plus maintenu. Le développement se poursuit sur un projet plus
+> complet : **[pi4-IA-Homekit-Camera](https://github.com/AlexBtlle/pi4-IA-Homekit-Camera)**
+> (détection par IA, pensé pour Raspberry Pi 4).
+>
+> Le code reste disponible en l'état pour un usage sur Raspberry Pi Zero 2, mais
+> ne recevra plus de corrections ni de nouvelles fonctionnalités.
+
 Projet open source permettant d'envoyer le flux vidéo d'une caméra CSI (module Pi Camera)
 branchée sur un **Raspberry Pi Zero 2** vers l'application **Maison** d'Apple via **HomeKit**.
 

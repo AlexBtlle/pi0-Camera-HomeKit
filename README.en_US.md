@@ -5,11 +5,9 @@
 > ⚠️ **Archived project — no longer maintained**
 >
 > This repository is no longer maintained. Development continues on a more
-> complete project: **[pi4-IA-Homekit-Camera](https://github.com/AlexBtlle/pi4-IA-Homekit-Camera)**
-> (AI-based detection, designed for the Raspberry Pi 4).
+> complete project: **[pi4-IA-Homekit-Camera](https://github.com/AlexBtlle/pi4-IA-Homekit-Camera)**.
 >
-> The code remains available as-is for use on a Raspberry Pi Zero 2, but will no
-> longer receive fixes or new features.
+> The code remains available as-is, but will no longer receive fixes or new features.
 
 Open-source project that streams the video feed of a CSI camera (Pi Camera module)
 connected to a **Raspberry Pi Zero 2** to Apple's **Home** app via **HomeKit**.
